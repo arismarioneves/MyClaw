@@ -1,0 +1,306 @@
+#!/usr/bin/env tsx
+import { createInterface } from 'readline'
+import { execSync, spawnSync } from 'child_process'
+import { writeFileSync, existsSync, readFileSync, mkdirSync } from 'fs'
+import { fileURLToPath } from 'url'
+import path from 'path'
+import os from 'os'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+const PROJECT_ROOT = path.resolve(__dirname, '..')
+
+// ─── ANSI colors ──────────────────────────────────────────────────────────────
+const c = {
+  reset: '\x1b[0m',
+  green: '\x1b[32m',
+  yellow: '\x1b[33m',
+  red: '\x1b[31m',
+  cyan: '\x1b[36m',
+  bold: '\x1b[1m',
+  dim: '\x1b[2m',
+}
+
+const ok = (msg: string) => console.log(`${c.green}✓${c.reset} ${msg}`)
+const warn = (msg: string) => console.log(`${c.yellow}⚠${c.reset} ${msg}`)
+const fail = (msg: string) => console.log(`${c.red}✗${c.reset} ${msg}`)
+const info = (msg: string) => console.log(`${c.cyan}→${c.reset} ${msg}`)
+const header = (msg: string) => console.log(`\n${c.bold}${msg}${c.reset}\n`)
+
+// ─── Readline helper ──────────────────────────────────────────────────────────
+const rl = createInterface({ input: process.stdin, output: process.stdout })
+
+function ask(question: string, defaultVal = ''): Promise<string> {
+  return new Promise((resolve) => {
+    const hint = defaultVal ? ` ${c.dim}[${defaultVal}]${c.reset}` : ''
+    rl.question(`${question}${hint}: `, (answer) => {
+      resolve(answer.trim() || defaultVal)
+    })
+  })
+}
+
+function askSecret(question: string): Promise<string> {
+  return new Promise((resolve) => {
+    process.stdout.write(`${question}: `)
+    // Basic secret input — doesn't hide chars on all terminals but avoids it staying in readline history
+    process.stdin.setRawMode?.(true)
+    let input = ''
+    const handler = (buf: Buffer) => {
+      const char = buf.toString()
+      if (char === '\r' || char === '\n') {
+        process.stdin.setRawMode?.(false)
+        process.stdin.off('data', handler)
+        process.stdout.write('\n')
+        resolve(input)
+      } else if (char === '\u0003') {
+        process.exit(0)
+      } else if (char === '\u007f') {
+        if (input.length > 0) {
+          input = input.slice(0, -1)
+          process.stdout.write('\b \b')
+        }
+      } else {
+        input += char
+        process.stdout.write('*')
+      }
+    }
+    process.stdin.on('data', handler)
+    process.stdin.resume()
+  })
+}
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
+async function main() {
+  console.clear()
+  console.log(`${c.cyan}
+███╗   ███╗██╗   ██╗     ██████╗██╗      █████╗ ██╗    ██╗
+████╗ ████║╚██╗ ██╔╝    ██╔════╝██║     ██╔══██╗██║    ██║
+██╔████╔██║ ╚████╔╝     ██║     ██║     ███████║██║ █╗ ██║
+██║╚██╔╝██║  ╚██╔╝      ██║     ██║     ██╔══██║██║███╗██║
+██║ ╚═╝ ██║   ██║       ╚██████╗███████╗██║  ██║╚███╔███╔╝
+╚═╝     ╚═╝   ╚═╝        ╚═════╝╚══════╝╚═╝  ╚═╝ ╚══╝╚══╝${c.reset} (by Mário)
+  `)
+
+  header('Step 1 — Checking requirements')
+
+  // Node version
+  const nodeVersion = parseInt(process.versions.node.split('.')[0] ?? '0', 10)
+  if (nodeVersion >= 20) {
+    ok(`Node.js ${process.versions.node}`)
+  } else {
+    fail(`Node.js >= 20 required. You have ${process.versions.node}`)
+    process.exit(1)
+  }
+
+  // Claude CLI
+  try {
+    const claudeVersion = execSync('claude --version', { encoding: 'utf-8', stdio: 'pipe' }).trim()
+    ok(`Claude CLI: ${claudeVersion}`)
+  } catch {
+    fail('claude CLI not found. Install it from https://claude.ai/code and run `claude login`.')
+    process.exit(1)
+  }
+
+  // Build project
+  header('Step 2 — Building project')
+  info('Running npm run build...')
+  const buildResult = spawnSync('npm', ['run', 'build'], {
+    cwd: PROJECT_ROOT,
+    stdio: 'inherit',
+    shell: true,
+  })
+  if (buildResult.status !== 0) {
+    fail('Build failed. Fix TypeScript errors above and run npm run setup again.')
+    process.exit(1)
+  }
+  ok('Build successful')
+
+  // Collect config
+  header('Step 3 — Configure your bot')
+
+  console.log(`
+To get your Telegram bot token:
+  1. Open Telegram and search for ${c.cyan}@BotFather${c.reset}
+  2. Send: /newbot
+  3. Follow the prompts (pick any name and username)
+  4. Copy the token it gives you
+`)
+
+  const botToken = await askSecret('Telegram bot token')
+  if (!botToken || !botToken.includes(':')) {
+    fail('Invalid token format. It should look like 123456:ABCdef...')
+    process.exit(1)
+  }
+
+  // Open CLAUDE.md
+  header('Step 4 — Personalize your assistant')
+  info('Opening CLAUDE.md in your editor...')
+  info('Fill in [YOUR NAME], [YOUR ASSISTANT NAME], and any context about yourself.')
+  await ask('Press Enter when ready to open the editor')
+
+  const editor = process.env['EDITOR'] ?? (os.platform() === 'win32' ? 'notepad' : 'nano')
+  spawnSync(editor, [path.join(PROJECT_ROOT, 'CLAUDE.md')], { stdio: 'inherit', shell: true })
+
+  // Write .env
+  header('Step 5 — Writing .env')
+  const envContent = `# Generated by MyClaw setup — ${new Date().toISOString()}
+
+# ─── Required ──────────────────────────────────────────────────────────────────
+TELEGRAM_BOT_TOKEN=${botToken}
+
+# Filled in after you send /chatid to your bot
+ALLOWED_CHAT_ID=
+
+# ─── Optional ──────────────────────────────────────────────────────────────────
+ANTHROPIC_API_KEY=
+
+LOG_LEVEL=info
+`
+  writeFileSync(path.join(PROJECT_ROOT, '.env'), envContent)
+  ok('.env written')
+
+  // Ensure store/ exists
+  mkdirSync(path.join(PROJECT_ROOT, 'store'), { recursive: true })
+  mkdirSync(path.join(PROJECT_ROOT, 'workspace', 'uploads'), { recursive: true })
+
+  // Background service
+  header('Step 6 — Background service')
+  const installService = await ask('Install as background service (auto-start on boot)?', 'y')
+
+  if (installService.toLowerCase() === 'y') {
+    const platform = os.platform()
+
+    if (platform === 'darwin') {
+      const plistPath = path.join(
+        os.homedir(),
+        'Library',
+        'LaunchAgents',
+        'com.myclaw.app.plist'
+      )
+      const nodePath = execSync('which node', { encoding: 'utf-8' }).trim()
+      const plistContent = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.myclaw.app</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>${nodePath}</string>
+    <string>${path.join(PROJECT_ROOT, 'dist', 'index.js')}</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>${PROJECT_ROOT}</string>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>ThrottleInterval</key>
+  <integer>5</integer>
+  <key>StandardOutPath</key>
+  <string>/tmp/myclaw.log</string>
+  <key>StandardErrorPath</key>
+  <string>/tmp/myclaw-error.log</string>
+</dict>
+</plist>`
+      writeFileSync(plistPath, plistContent)
+      try {
+        execSync(`launchctl unload "${plistPath}" 2>/dev/null; launchctl load "${plistPath}"`, {
+          shell: true,
+        })
+        ok('launchd service installed and started')
+        info('Logs: /tmp/myclaw.log')
+        info(`Stop:  launchctl unload "${plistPath}"`)
+        info(`Start: launchctl load "${plistPath}"`)
+      } catch (err) {
+        warn(`Service file written to ${plistPath} but launchctl failed. Load it manually.`)
+      }
+    } else if (platform === 'linux') {
+      const serviceDir = path.join(os.homedir(), '.config', 'systemd', 'user')
+      mkdirSync(serviceDir, { recursive: true })
+      const servicePath = path.join(serviceDir, 'myclaw.service')
+      const nodePath = execSync('which node', { encoding: 'utf-8' }).trim()
+      const serviceContent = `[Unit]
+Description=MyClaw Personal AI Assistant
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=${PROJECT_ROOT}
+ExecStart=${nodePath} ${path.join(PROJECT_ROOT, 'dist', 'index.js')}
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target
+`
+      writeFileSync(servicePath, serviceContent)
+      try {
+        execSync('systemctl --user daemon-reload && systemctl --user enable myclaw && systemctl --user start myclaw', {
+          shell: true,
+        })
+        ok('systemd service installed and started')
+        info('Logs: journalctl --user -u myclaw -f')
+        info('Stop:  systemctl --user stop myclaw')
+        info('Start: systemctl --user start myclaw')
+      } catch {
+        warn(`Service file written to ${servicePath} but systemctl failed. Enable it manually.`)
+      }
+    } else {
+      warn('Windows detected. Install PM2 to run MyClaw as a background service:')
+      console.log(`
+  npm install -g pm2
+  pm2 start "${path.join(PROJECT_ROOT, 'dist', 'index.js')}" --name myclaw
+  pm2 save
+  pm2 startup
+`)
+    }
+  } else {
+    info('Skipping service install. Run manually with: npm run start')
+  }
+
+  // Get chat ID
+  header('Step 7 — Get your chat ID')
+  console.log(`
+Now:
+  1. Start MyClaw if it isn't running: ${c.cyan}npm run start${c.reset}
+  2. Open Telegram and send ${c.cyan}/chatid${c.reset} to your bot
+  3. Paste the number below
+`)
+
+  const chatId = await ask('Your chat ID (from /chatid)')
+  if (chatId) {
+    const envPath = path.join(PROJECT_ROOT, '.env')
+    let envContent2 = readFileSync(envPath, 'utf-8')
+    envContent2 = envContent2.replace('ALLOWED_CHAT_ID=', `ALLOWED_CHAT_ID=${chatId}`)
+    writeFileSync(envPath, envContent2)
+    ok(`.env updated with ALLOWED_CHAT_ID=${chatId}`)
+    info('Restart MyClaw for this to take effect.')
+  } else {
+    warn('No chat ID entered. Edit .env manually and set ALLOWED_CHAT_ID.')
+  }
+
+  // Done
+  header('Setup complete!')
+  console.log(`${c.green}MyClaw is ready.${c.reset}
+
+Next steps:
+  ${c.cyan}npm run start${c.reset}        Start the bot
+  ${c.cyan}npm run dev${c.reset}          Start in dev mode (hot reload)
+  ${c.cyan}npm run status${c.reset}       Check configuration health
+
+Scheduled tasks:
+  ${c.cyan}node dist/schedule-cli.js create "Summarize my emails" "0 9 * * *" ${chatId || 'YOUR_CHAT_ID'}${c.reset}
+  ${c.cyan}node dist/schedule-cli.js list${c.reset}
+
+Personalize:
+  Edit ${c.cyan}CLAUDE.md${c.reset} any time to update your assistant's context and personality.
+`)
+
+  rl.close()
+}
+
+main().catch((err) => {
+  fail(String(err))
+  process.exit(1)
+})
