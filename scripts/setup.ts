@@ -132,14 +132,14 @@ To get your Telegram bot token:
     process.exit(1)
   }
 
-  // Open CLAUDE.md
+  // Open MYCLAW.md
   header('Step 4 — Personalize your assistant')
-  info('Opening CLAUDE.md in your editor...')
+  info('Opening MYCLAW.md in your editor...')
   info('Fill in [YOUR NAME], [YOUR ASSISTANT NAME], and any context about yourself.')
   await ask('Press Enter when ready to open the editor')
 
   const editor = process.env['EDITOR'] ?? (os.platform() === 'win32' ? 'notepad' : 'nano')
-  spawnSync(editor, [path.join(PROJECT_ROOT, 'CLAUDE.md')], { stdio: 'inherit', shell: true })
+  spawnSync(editor, [path.join(PROJECT_ROOT, 'MYCLAW.md')], { stdio: 'inherit', shell: true })
 
   // Write .env
   header('Step 5 — Writing .env')
@@ -294,7 +294,7 @@ Scheduled tasks:
   ${c.cyan}node dist/schedule-cli.js list${c.reset}
 
 Personalize:
-  Edit ${c.cyan}CLAUDE.md${c.reset} any time to update your assistant's context and personality.
+  Edit ${c.cyan}MYCLAW.md${c.reset} any time to update your assistant's context and personality.
 `)
 
   rl.close()
