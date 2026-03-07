@@ -195,7 +195,7 @@ export function createBot(): Bot {
       )
     } catch (err) {
       logger.error({ err }, 'Text message handler error')
-      await ctx.reply('Something went wrong. Check the logs.').catch(() => { })
+      await ctx.reply('Something went wrong.').catch(() => { })
     }
   })
 

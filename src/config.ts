@@ -11,6 +11,13 @@ export const STORE_DIR = path.join(PROJECT_ROOT, 'store')
 
 const env = readEnvFile()
 
+// Forward env vars to process.env so child processes (Claude SDK) inherit them
+for (const [key, value] of Object.entries(env)) {
+  if (value && !process.env[key]) {
+    process.env[key] = value
+  }
+}
+
 export const TELEGRAM_BOT_TOKEN = env['TELEGRAM_BOT_TOKEN'] ?? ''
 export let ALLOWED_CHAT_ID = env['ALLOWED_CHAT_ID'] ?? ''
 
