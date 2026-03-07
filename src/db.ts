@@ -29,25 +29,6 @@ export function initDatabase(): void {
       accessed_at INTEGER NOT NULL
     );
 
-    CREATE VIRTUAL TABLE IF NOT EXISTS memories_fts USING fts5(
-      content,
-      content='memories',
-      content_rowid='id'
-    );
-
-    CREATE TRIGGER IF NOT EXISTS memories_ai AFTER INSERT ON memories BEGIN
-      INSERT INTO memories_fts(rowid, content) VALUES (new.id, new.content);
-    END;
-
-    CREATE TRIGGER IF NOT EXISTS memories_ad AFTER DELETE ON memories BEGIN
-      INSERT INTO memories_fts(memories_fts, rowid, content) VALUES('delete', old.id, old.content);
-    END;
-
-    CREATE TRIGGER IF NOT EXISTS memories_au AFTER UPDATE ON memories BEGIN
-      INSERT INTO memories_fts(memories_fts, rowid, content) VALUES('delete', old.id, old.content);
-      INSERT INTO memories_fts(rowid, content) VALUES (new.id, new.content);
-    END;
-
     CREATE TABLE IF NOT EXISTS scheduled_tasks (
       id          TEXT PRIMARY KEY,
       chat_id     TEXT NOT NULL,
@@ -122,16 +103,27 @@ export function insertHighSalienceMemory(chatId: string, content: string): void 
   `).run(chatId, content, now, now)
 }
 
-export function searchMemoriesFts(chatId: string, query: string, limit = 3): Memory[] {
+export function searchMemories(chatId: string, query: string, limit = 3): Memory[] {
+  // Extract keywords and search with LIKE (FTS5 not available in Node.js experimental SQLite)
+  const words = query
+    .replace(/[^a-zA-Z0-9\s]/g, ' ')
+    .trim()
+    .split(/\s+/)
+    .filter((w) => w.length > 2)
+
+  if (words.length === 0) return []
+
+  const conditions = words.map(() => 'content LIKE ?').join(' OR ')
+  const params = words.map((w) => `%${w}%`)
+
   return db
     .prepare(`
-      SELECT m.* FROM memories m
-      JOIN memories_fts fts ON fts.rowid = m.id
-      WHERE memories_fts MATCH ? AND m.chat_id = ?
-      ORDER BY rank
+      SELECT * FROM memories
+      WHERE chat_id = ? AND (${conditions})
+      ORDER BY salience DESC, accessed_at DESC
       LIMIT ?
     `)
-    .all(query, chatId, limit) as unknown as Memory[]
+    .all(chatId, ...params, limit) as unknown as Memory[]
 }
 
 export function getRecentMemories(chatId: string, limit = 5): Memory[] {

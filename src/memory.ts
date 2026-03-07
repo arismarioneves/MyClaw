@@ -1,6 +1,6 @@
 import {
   insertMemory,
-  searchMemoriesFts,
+  searchMemories,
   getRecentMemories,
   touchMemory,
   decayMemories as dbDecayMemories,
@@ -13,19 +13,15 @@ export async function buildMemoryContext(chatId: string, userMessage: string): P
   const memories: { id: number; content: string; sector: string }[] = []
   const seenIds = new Set<number>()
 
-  // FTS search
+  // Keyword search
   const sanitized = userMessage
     .replace(/[^a-zA-Z0-9\s]/g, ' ')
     .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((w) => `${w}*`)
-    .join(' ')
 
-  if (sanitized.length > 1) {
+  if (sanitized.length > 2) {
     try {
-      const ftsResults = searchMemoriesFts(chatId, sanitized, 3)
-      for (const m of ftsResults) {
+      const results = searchMemories(chatId, sanitized, 3)
+      for (const m of results) {
         if (!seenIds.has(m.id)) {
           seenIds.add(m.id)
           memories.push(m)
@@ -33,7 +29,7 @@ export async function buildMemoryContext(chatId: string, userMessage: string): P
         }
       }
     } catch (err) {
-      logger.warn({ err }, 'FTS search failed')
+      logger.warn({ err }, 'Memory search failed')
     }
   }
 
