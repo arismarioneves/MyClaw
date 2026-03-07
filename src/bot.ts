@@ -21,7 +21,7 @@ export { formatForTelegram, splitMessage }
 // ─── Auth ────────────────────────────────────────────────────────────────────
 
 export function isAuthorised(chatId: number | string): boolean {
-  if (!ALLOWED_CHAT_ID) return true // first-run: no ID configured yet
+  if (!ALLOWED_CHAT_ID) return false // no ID configured — locked until /start
   return String(chatId) === String(ALLOWED_CHAT_ID)
 }
 

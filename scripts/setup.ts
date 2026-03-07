@@ -148,7 +148,7 @@ To get your Telegram bot token:
 # ─── Required ──────────────────────────────────────────────────────────────────
 TELEGRAM_BOT_TOKEN=${botToken}
 
-# Filled in after you send /chatid to your bot
+# Auto-registered on first /start (or set manually)
 ALLOWED_CHAT_ID=
 
 # ─── Optional ──────────────────────────────────────────────────────────────────
