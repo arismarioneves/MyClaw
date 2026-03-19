@@ -63,6 +63,50 @@ export function formatForTelegram(text: string): string {
   return result.trim()
 }
 
+/**
+ * Convert Markdown text to Slack mrkdwn format.
+ */
+export function formatForSlack(text: string): string {
+  // Protect code blocks from further transformation
+  const codeBlocks: string[] = []
+  let result = text.replace(/```[\s\S]*?```/g, (match) => {
+    codeBlocks.push(match)
+    return `\x00CODE${codeBlocks.length - 1}\x00`
+  })
+
+  // Protect inline code
+  const inlineCodes: string[] = []
+  result = result.replace(/`[^`\n]+`/g, (match) => {
+    inlineCodes.push(match)
+    return `\x00INLINE${inlineCodes.length - 1}\x00`
+  })
+
+  // Headers → bold
+  result = result.replace(/^#{1,6}\s+(.+)$/gm, '*$1*')
+
+  // Bold: **text** → *text*
+  result = result.replace(/\*\*(.+?)\*\*/g, '*$1*')
+
+  // Italic: _text_ or *text* (single) → _text_
+  result = result.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '_$1_')
+  result = result.replace(/(?<!_)_(?!_)(.+?)(?<!_)_(?!_)/g, '_$1_')
+
+  // Strikethrough: ~~text~~ → ~text~
+  result = result.replace(/~~(.+?)~~/g, '~$1~')
+
+  // Links: [text](url) → <url|text>
+  result = result.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '<$2|$1>')
+
+  // Horizontal rules → empty line
+  result = result.replace(/^[-*_]{3,}$/gm, '')
+
+  // Restore code blocks
+  result = result.replace(/\x00CODE(\d+)\x00/g, (_, i) => codeBlocks[Number(i)] ?? '')
+  result = result.replace(/\x00INLINE(\d+)\x00/g, (_, i) => inlineCodes[Number(i)] ?? '')
+
+  return result.trim()
+}
+
 export function splitMessage(text: string, limit = MAX_MESSAGE_LENGTH): string[] {
   if (text.length <= limit) return [text]
 

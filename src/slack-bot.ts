@@ -1,0 +1,131 @@
+import Bolt from '@slack/bolt'
+const { App } = Bolt
+type SlackApp = InstanceType<typeof App>
+
+import {
+  SLACK_BOT_TOKEN,
+  SLACK_APP_TOKEN,
+  SLACK_SIGNING_SECRET,
+  ALLOWED_SLACK_USER_ID,
+} from './config.js'
+import { getSession, setSession, clearSession } from './db.js'
+import { runAgent } from './agent.js'
+import { buildMemoryContext, saveConversationTurn } from './memory.js'
+import { buildConnectionsContext } from './connections/index.js'
+import { formatForSlack, splitMessage } from './format.js'
+import { logger } from './logger.js'
+
+// ─── Auth ─────────────────────────────────────────────────────────────────────
+
+function isAuthorised(userId: string): boolean {
+  if (!ALLOWED_SLACK_USER_ID) return true // open if not configured
+  return userId === ALLOWED_SLACK_USER_ID
+}
+
+// ─── Core handler ─────────────────────────────────────────────────────────────
+
+async function handleMessage(
+  channelId: string,
+  userId: string,
+  rawText: string,
+  say: (msg: string) => Promise<unknown>
+): Promise<void> {
+  if (!isAuthorised(userId)) {
+    logger.warn({ userId }, 'Unauthorised Slack message ignored')
+    return
+  }
+
+  const connectionCtx = buildConnectionsContext()
+  const memCtx = await buildMemoryContext(channelId, rawText)
+  const ctxParts = [connectionCtx, memCtx].filter(Boolean)
+  const fullMessage = ctxParts.length > 0 ? `${ctxParts.join('\n\n')}\n\n${rawText}` : rawText
+
+  const sessionId = getSession(channelId)
+
+  const { text, newSessionId } = await runAgent(fullMessage, sessionId)
+
+  if (newSessionId) setSession(channelId, newSessionId)
+
+  const response = text ?? '(no response)'
+
+  if (text) {
+    await saveConversationTurn(channelId, rawText, text)
+  }
+
+  const formatted = formatForSlack(response)
+  const chunks = splitMessage(formatted)
+
+  for (const chunk of chunks) {
+    await say(chunk)
+  }
+}
+
+// ─── App factory ──────────────────────────────────────────────────────────────
+
+export function createSlackApp(): SlackApp {
+  if (!SLACK_BOT_TOKEN || !SLACK_APP_TOKEN) {
+    throw new Error('SLACK_BOT_TOKEN and SLACK_APP_TOKEN must be set in .env')
+  }
+
+  const app = new App({
+    token: SLACK_BOT_TOKEN,
+    appToken: SLACK_APP_TOKEN,
+    signingSecret: SLACK_SIGNING_SECRET || 'unused',
+    socketMode: true,
+  })
+
+  // ── /newchat ────────────────────────────────────────────────────────────────
+  app.command('/newchat', async ({ command, ack, say }) => {
+    await ack()
+    clearSession(command.channel_id)
+    await say('Session cleared. Starting fresh.')
+  })
+
+  // ── Direct messages ─────────────────────────────────────────────────────────
+  app.message(async ({ message, say }) => {
+    const msg = message as unknown as Record<string, unknown>
+
+    // Ignore bot messages, edits, deletes
+    if (msg['subtype'] || msg['bot_id']) return
+
+    const userId = msg['user'] as string | undefined
+    const channelId = msg['channel'] as string | undefined
+    const text = (msg['text'] as string | undefined) ?? ''
+
+    if (!userId || !channelId || !text.trim()) return
+
+    logger.info({ userId, channelId }, 'Slack incoming message')
+
+    try {
+      await handleMessage(channelId, userId, text, (m) => say(m))
+    } catch (err) {
+      logger.error({ err }, 'Slack message handler error')
+      await say('Something went wrong processing your request.').catch(() => { })
+    }
+  })
+
+  // ── App mentions (@bot in channels) ─────────────────────────────────────────
+  app.event('app_mention', async ({ event, say }) => {
+    const userId = event.user ?? ''
+    const channelId = event.channel
+    // Strip the bot mention tag from the text
+    const text = event.text.replace(/<@[A-Z0-9]+>/g, '').trim()
+
+    if (!text || !userId) return
+
+    logger.info({ userId, channelId }, 'Slack app mention')
+
+    try {
+      await handleMessage(channelId, userId, text, (m) => say(m))
+    } catch (err) {
+      logger.error({ err }, 'Slack mention handler error')
+      await say('Something went wrong processing your request.').catch(() => { })
+    }
+  })
+
+  app.error(async (error) => {
+    logger.error({ error }, 'Slack app error')
+  })
+
+  return app
+}

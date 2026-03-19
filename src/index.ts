@@ -1,10 +1,11 @@
 import { existsSync, readFileSync, writeFileSync, unlinkSync, mkdirSync } from 'fs'
 import path from 'path'
-import { STORE_DIR, TELEGRAM_BOT_TOKEN } from './config.js'
+import { STORE_DIR, TELEGRAM_BOT_TOKEN, SLACK_BOT_TOKEN, SLACK_APP_TOKEN } from './config.js'
 import { initDatabase } from './db.js'
 import { runDecaySweep } from './memory.js'
 import { cleanupOldUploads, UPLOADS_DIR } from './media.js'
 import { createBot } from './bot.js'
+import { createSlackApp } from './slack-bot.js'
 import { initScheduler } from './scheduler.js'
 import { logger } from './logger.js'
 
@@ -51,8 +52,11 @@ async function main(): Promise<void> {
   console.log(BANNER)
   console.log()
 
-  if (!TELEGRAM_BOT_TOKEN) {
-    logger.error('TELEGRAM_BOT_TOKEN is not set. Run: npm run setup')
+  const hasSlack = !!(SLACK_BOT_TOKEN && SLACK_APP_TOKEN)
+  const hasTelegram = !!TELEGRAM_BOT_TOKEN
+
+  if (!hasTelegram && !hasSlack) {
+    logger.error('No messenger configured. Set TELEGRAM_BOT_TOKEN or SLACK_BOT_TOKEN + SLACK_APP_TOKEN')
     process.exit(1)
   }
 
@@ -70,30 +74,46 @@ async function main(): Promise<void> {
   // Cleanup stale uploads
   cleanupOldUploads()
 
-  const bot = createBot()
-
-  // Scheduler sends messages via bot.api
-  initScheduler(async (chatId, text) => {
-    await bot.api.sendMessage(chatId, text)
-  })
-
   const shutdown = async (signal: string): Promise<void> => {
     logger.info({ signal }, 'Shutting down')
     releaseLock()
-    await bot.stop()
     process.exit(0)
   }
 
   process.on('SIGINT', () => void shutdown('SIGINT'))
   process.on('SIGTERM', () => void shutdown('SIGTERM'))
 
-  try {
-    logger.info('MyClaw starting...')
-    await bot.start()
-  } catch (err) {
-    logger.error({ err }, 'Failed to start bot — check TELEGRAM_BOT_TOKEN in .env')
-    releaseLock()
-    process.exit(1)
+  logger.info('MyClaw starting...')
+
+  // ── Telegram ────────────────────────────────────────────────────────────────
+  if (hasTelegram) {
+    const bot = createBot()
+
+    // Scheduler sends messages via Telegram bot
+    initScheduler(async (chatId, text) => {
+      await bot.api.sendMessage(chatId, text)
+    })
+
+    try {
+      await bot.start()
+    } catch (err) {
+      logger.error({ err }, 'Failed to start Telegram bot — check TELEGRAM_BOT_TOKEN in .env')
+      releaseLock()
+      process.exit(1)
+    }
+  }
+
+  // ── Slack ───────────────────────────────────────────────────────────────────
+  if (hasSlack) {
+    try {
+      const slackApp = createSlackApp()
+      await slackApp.start()
+      logger.info('Slack bot started')
+    } catch (err) {
+      logger.error({ err }, 'Failed to start Slack bot — check SLACK_BOT_TOKEN and SLACK_APP_TOKEN in .env')
+      releaseLock()
+      process.exit(1)
+    }
   }
 }
 

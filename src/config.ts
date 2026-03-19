@@ -36,6 +36,13 @@ export function setAllowedChatId(id: string): void {
 export const MAX_MESSAGE_LENGTH = 4096
 export const TYPING_REFRESH_MS = 4000
 
+// ─── Slack ────────────────────────────────────────────────────────────────────
+export const SLACK_BOT_TOKEN = env['SLACK_BOT_TOKEN'] ?? ''
+export const SLACK_APP_TOKEN = env['SLACK_APP_TOKEN'] ?? ''
+export const SLACK_SIGNING_SECRET = env['SLACK_SIGNING_SECRET'] ?? ''
+// Optional: restrict to a single Slack user ID (e.g. U01234ABCDE)
+export const ALLOWED_SLACK_USER_ID = env['ALLOWED_SLACK_USER_ID'] ?? ''
+
 // ─── Connections ──────────────────────────────────────────────────────────────
 export const JIRA_HOST = env['JIRA_HOST'] ?? ''
 export const JIRA_EMAIL = env['JIRA_EMAIL'] ?? ''
