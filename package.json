@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "latest",
+    "axios": "^1.13.6",
     "cron-parser": "^4.9.0",
     "grammy": "^1.21.1",
     "pino": "^8.19.0",
