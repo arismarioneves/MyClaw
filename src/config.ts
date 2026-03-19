@@ -35,3 +35,14 @@ export function setAllowedChatId(id: string): void {
 
 export const MAX_MESSAGE_LENGTH = 4096
 export const TYPING_REFRESH_MS = 4000
+
+// ─── Connections ──────────────────────────────────────────────────────────────
+export const JIRA_HOST = env['JIRA_HOST'] ?? ''
+export const JIRA_EMAIL = env['JIRA_EMAIL'] ?? ''
+export const JIRA_API_TOKEN = env['JIRA_API_TOKEN'] ?? ''
+
+// Path to the local git repository the agent will work on
+export const LOCAL_REPO_PATH = env['LOCAL_REPO_PATH'] ?? ''
+
+// GitHub repository (owner/repo). Enables the GitHub connection.
+export const GITHUB_REPO = env['GITHUB_REPO'] ?? ''

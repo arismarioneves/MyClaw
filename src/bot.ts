@@ -12,6 +12,7 @@ import {
 } from './db.js'
 import { runAgent } from './agent.js'
 import { buildMemoryContext, saveConversationTurn } from './memory.js'
+import { buildConnectionsContext } from './connections/index.js'
 import { downloadMedia, buildPhotoMessage, buildDocumentMessage } from './media.js'
 import { formatForTelegram, splitMessage } from './format.js'
 import { logger } from './logger.js'
@@ -35,8 +36,10 @@ async function handleMessage(
 ): Promise<void> {
   const chatIdStr = String(chatId)
 
+  const connectionCtx = buildConnectionsContext()
   const memCtx = await buildMemoryContext(chatIdStr, rawText)
-  const fullMessage = memCtx ? `${memCtx}\n\n${rawText}` : rawText
+  const ctxParts = [connectionCtx, memCtx].filter(Boolean)
+  const fullMessage = ctxParts.length > 0 ? `${ctxParts.join('\n\n')}\n\n${rawText}` : rawText
 
   const sessionId = getSession(chatIdStr)
 
