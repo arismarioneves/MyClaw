@@ -6,7 +6,7 @@ import { logger } from './logger.js'
 
 mkdirSync(STORE_DIR, { recursive: true })
 
-const DB_PATH = process.env['TEST_DB_PATH'] ?? path.join(STORE_DIR, 'myclaw.db')
+const DB_PATH = process.env['TEST_DB_PATH'] ?? path.join(STORE_DIR, 'data.db')
 export const db = new DatabaseSync(DB_PATH)
 db.exec('PRAGMA journal_mode = WAL')
 
