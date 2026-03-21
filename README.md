@@ -1,12 +1,9 @@
 <p align="center">
-<pre>
-███╗   ███╗██╗   ██╗     ██████╗██╗      █████╗ ██╗    ██╗
-████╗ ████║╚██╗ ██╔╝    ██╔════╝██║     ██╔══██╗██║    ██║
-██╔████╔██║ ╚████╔╝     ██║     ██║     ███████║██║ █╗ ██║
-██║╚██╔╝██║  ╚██╔╝      ██║     ██║     ██╔══██║██║███╗██║
-██║ ╚═╝ ██║   ██║       ╚██████╗███████╗██║  ██║╚███╔███╔╝
-╚═╝     ╚═╝   ╚═╝        ╚═════╝╚══════╝╚═╝  ╚═╝ ╚══╝╚══╝
-</pre>
+  <img src="lizz.png" width="100" alt="Lizz" />
+</p>
+
+<p align="center">
+  <b>Lizz</b>
 </p>
 
 <p align="center">
@@ -20,16 +17,16 @@
 
 ---
 
-## What is MyClaw?
+## What is Lizz?
 
-MyClaw is a **lightweight, simplified** version of OpenClaw. It connects **Claude Code** to **Telegram** and/or **Slack**, letting you remotely control your computer from anywhere, straight from chat.
+Lizz is a **lightweight, simplified** version of OpenClaw. It connects **Claude Code** to **Telegram** and/or **Slack**, letting you remotely control your computer from anywhere, straight from chat.
 
 The project reuses Claude Code's secure environment (skills, sessions, and coworking), but with a permission bypass that gives full system access, not just the coworking folder.
 
 ### How it works
 
 ```
-You (Telegram or Slack) → MyClaw Bot → Claude Code → Your computer
+You (Telegram or Slack) → Lizz Bot → Claude Code → Your computer
 ```
 
 1. You send a message on Telegram or Slack
@@ -57,8 +54,8 @@ At least one messenger (Telegram or Slack) must be configured.
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/arismarioneves/MyClaw.git
-cd MyClaw
+git clone https://github.com/ae8/Lizz.git
+cd Lizz
 ```
 
 ### 2. Install dependencies
@@ -77,7 +74,7 @@ The setup will:
 - ✅ Check that Node.js and Claude CLI are installed
 - ✅ Build the project (TypeScript → JavaScript)
 - ✅ Ask for your Telegram **bot token**
-- ✅ Open `MYCLAW.md` for you to personalize the assistant
+- ✅ Open `LIZZ.md` for you to personalize the assistant
 - ✅ Create the `.env` file with your configuration
 - ✅ Offer to install as a background service (optional)
 
@@ -214,7 +211,7 @@ Cron examples:
 
 ## Personalization
 
-Edit **`MYCLAW.md`** in the project root to customize:
+Edit **`LIZZ.md`** in the project root to customize:
 
 - Assistant name
 - Personality and tone
@@ -238,7 +235,7 @@ Via Telegram, the bot accepts:
 
 | OS | Support | Background service |
 |----|---------|-------------------|
-| **Windows** | ✅ | Via PM2 (`pm2 start dist/index.js --name myclaw`) |
+| **Windows** | ✅ | Via PM2 (`pm2 start dist/index.js --name lizz`) |
 | **macOS** | ✅ | Via launchd (auto-configured by setup) |
 | **Linux** | ✅ | Via systemd (auto-configured by setup) |
 
@@ -247,7 +244,7 @@ Via Telegram, the bot accepts:
 ## Project Structure
 
 ```
-MyClaw/
+Lizz/
 ├── src/
 │   ├── index.ts            # Entry point
 │   ├── bot.ts              # Telegram bot logic (grammY)
@@ -273,7 +270,7 @@ MyClaw/
 │   ├── setup.ts            # Interactive setup wizard
 │   ├── status.ts           # Health checker
 │   └── notify.sh           # Notification script
-├── MYCLAW.md               # Assistant personality and instructions
+├── LIZZ.md                 # Assistant personality and instructions
 ├── .env.example            # Environment variables example
 ├── package.json
 └── tsconfig.json
@@ -318,8 +315,8 @@ MyClaw/
 ## Quick Start
 
 ```bash
-git clone https://github.com/arismarioneves/MyClaw.git
-cd MyClaw
+git clone https://github.com/ae8/Lizz.git
+cd Lizz
 npm install
 npm run setup
 npm run start
@@ -330,5 +327,5 @@ npm run start
 ---
 
 <p align="center">
-  <sub>Make your day better with MyClaw</sub>
+  <sub>Make your day better with Lizz</sub>
 </p>

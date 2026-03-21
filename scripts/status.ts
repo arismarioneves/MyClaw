@@ -70,7 +70,7 @@ async function checkTelegramToken(token: string): Promise<string | null> {
 }
 
 async function main() {
-  console.log(`\n${c.bold}MyClaw Status${c.reset}\n`)
+  console.log(`\n${c.bold}Lizz Status${c.reset}\n`)
 
   const env = parseEnvFile()
 
@@ -135,7 +135,7 @@ async function main() {
 
   if (platform === 'darwin') {
     try {
-      const result = execSync('launchctl list com.myclaw.app 2>/dev/null', {
+      const result = execSync('launchctl list com.lizz.app 2>/dev/null', {
         encoding: 'utf-8',
         stdio: 'pipe',
       }).trim()
@@ -146,7 +146,7 @@ async function main() {
     }
   } else if (platform === 'linux') {
     try {
-      const result = execSync('systemctl --user is-active myclaw 2>/dev/null', {
+      const result = execSync('systemctl --user is-active lizz 2>/dev/null', {
         encoding: 'utf-8',
         stdio: 'pipe',
       }).trim()

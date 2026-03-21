@@ -82,13 +82,13 @@ export function createBot(): Bot {
       setAllowedChatId(String(ctx.chat.id))
       logger.info({ chatId: ctx.chat.id }, 'Auto-registered chat ID')
       await ctx.reply(
-        `Chat ID registered: <code>${ctx.chat.id}</code>\n\nMyClaw is ready. Send me anything.`,
+        `Chat ID registered: <code>${ctx.chat.id}</code>\n\nLizz is ready. Send me anything.`,
         { parse_mode: 'HTML' }
       )
       return
     }
     if (!isAuthorised(ctx.chat.id)) return
-    await ctx.reply('MyClaw is running.\n\nSend me anything.')
+    await ctx.reply('Lizz is running.\n\nSend me anything.')
   })
 
   // ── /chatid ─────────────────────────────────────────────────────────────────

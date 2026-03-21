@@ -9,16 +9,15 @@ import { createSlackApp } from './slack-bot.js'
 import { initScheduler } from './scheduler.js'
 import { logger } from './logger.js'
 
-const BANNER = `
-███╗   ███╗██╗   ██╗     ██████╗██╗      █████╗ ██╗    ██╗
-████╗ ████║╚██╗ ██╔╝    ██╔════╝██║     ██╔══██╗██║    ██║
-██╔████╔██║ ╚████╔╝     ██║     ██║     ███████║██║ █╗ ██║
-██║╚██╔╝██║  ╚██╔╝      ██║     ██║     ██╔══██║██║███╗██║
-██║ ╚═╝ ██║   ██║       ╚██████╗███████╗██║  ██║╚███╔███╔╝
-╚═╝     ╚═╝   ╚═╝        ╚═════╝╚══════╝╚═╝  ╚═╝ ╚══╝╚══╝ (by Mario)
-`.trim()
+const BANNER = [
+  '\x1b[31m  ██  ██  \x1b[0m',
+  '\x1b[31m  ██  ██  \x1b[0m  \x1b[1;97mLizz\x1b[0m',
+  '\x1b[31m  ██  ██  \x1b[0m',
+  '\x1b[31m██  ██  ██\x1b[0m',
+  '\x1b[31m██████████\x1b[0m',
+].join('\n')
 
-const PID_FILE = path.join(STORE_DIR, 'myclaw.pid')
+const PID_FILE = path.join(STORE_DIR, 'lizz.pid')
 
 function acquireLock(): void {
   mkdirSync(STORE_DIR, { recursive: true })
@@ -30,7 +29,7 @@ function acquireLock(): void {
       try {
         process.kill(oldPid, 0) // throws if not alive
         process.kill(oldPid, 'SIGTERM')
-        logger.info({ oldPid }, 'Killed stale MyClaw process')
+        logger.info({ oldPid }, 'Killed stale Lizz process')
       } catch {
         // Process not running — stale pid file, safe to overwrite
       }
@@ -83,7 +82,7 @@ async function main(): Promise<void> {
   process.on('SIGINT', () => void shutdown('SIGINT'))
   process.on('SIGTERM', () => void shutdown('SIGTERM'))
 
-  logger.info('MyClaw starting...')
+  logger.info('Lizz starting...')
 
   // ── Telegram ────────────────────────────────────────────────────────────────
   if (hasTelegram) {

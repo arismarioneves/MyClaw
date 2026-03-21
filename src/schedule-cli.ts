@@ -97,7 +97,7 @@ switch (cmd) {
 
   default:
     console.log(`
-MyClaw Schedule CLI
+Lizz Schedule CLI
 
 Commands:
   create "<prompt>" "<cron>" <chat_id>  Create a new scheduled task

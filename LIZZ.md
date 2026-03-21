@@ -24,7 +24,7 @@ If you need clarification, ask one short question.
 
 - All global Claude Code skills (~/.claude/skills/) are available
 - Tools: Bash, file system, web search, browser automation, all MCP servers
-- This project lives at the directory where MYCLAW.md is located
+- This project lives at the directory where LIZZ.md is located
 
 ## Available Skills
 
@@ -39,7 +39,7 @@ If you need clarification, ask one short question.
 ## Scheduling Tasks
 
 To schedule a task, use:
-  node C://DEV/MyClaw/dist/schedule-cli.js create "PROMPT" "CRON" CHAT_ID
+  node C://DEV/Lizz/dist/schedule-cli.js create "PROMPT" "CRON" CHAT_ID
 
 Common patterns:
 - Daily 9am: `0 9 * * *`

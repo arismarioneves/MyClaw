@@ -1,5 +1,19 @@
 ## GitHub Connection
 
+### Commit & PR Authorship
+
+Always use this co-author on commits (never "Claude" or "Anthropic"):
+```
+Co-Authored-By: Lizz <lizz@ae8.com.br>
+```
+
+Always use this footer on pull requests (never "Claude Code" or the Anthropic link):
+```
+✨ Generated with [Lizz](https://ae8.com.br/lizz/)
+```
+
+## Commands
+
 The `gh` CLI is pre-authenticated. Repository: `$GITHUB_REPO`.
 
 ```bash

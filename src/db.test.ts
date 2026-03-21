@@ -3,7 +3,7 @@ import { tmpdir } from 'os'
 import path from 'path'
 
 // Set TEST_DB_PATH before the module is imported so db.ts uses a temp file
-const TEST_DB = path.join(tmpdir(), `myclaw-test-${process.pid}.db`)
+const TEST_DB = path.join(tmpdir(), `lizz-test-${process.pid}.db`)
 process.env['TEST_DB_PATH'] = TEST_DB
 
 // Dynamic import so the env var is read at module init time
