@@ -210,10 +210,14 @@ LOCAL_REPO_PATH=C:/DEV/my-project
 
 ## Task Scheduling
 
-You can schedule the bot to run prompts automatically (Telegram only):
+You can schedule the bot to run prompts automatically on both Telegram and Slack:
 
 ```bash
-node dist/schedule-cli.js create "Summarize my emails" "0 9 * * *" YOUR_CHAT_ID
+# Telegram: use your numeric Chat ID
+node dist/schedule-cli.js create "Summarize my emails" "0 9 * * *" 123456789
+
+# Slack: use a channel or DM ID (e.g. C0ANMACP82W)
+node dist/schedule-cli.js create "Summarize my emails" "0 9 * * *" C0ANMACP82W
 ```
 
 Cron examples:

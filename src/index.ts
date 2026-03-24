@@ -6,7 +6,8 @@ import { runDecaySweep } from './memory.js'
 import { cleanupOldUploads, UPLOADS_DIR } from './media.js'
 import { createBot } from './bot.js'
 import { createSlackApp } from './slack-bot.js'
-import { initScheduler } from './scheduler.js'
+import { initScheduler, type Sender } from './scheduler.js'
+import { formatForSlack, splitMessage } from './format.js'
 import { logger } from './logger.js'
 
 const BANNER = [
@@ -84,17 +85,30 @@ async function main(): Promise<void> {
 
   logger.info('Lizz starting...')
 
+  const telegramBot = hasTelegram ? createBot() : undefined
+  const slackApp = hasSlack ? createSlackApp() : undefined
+
+  // ── Scheduler (routes by chat_id format) ────────────────────────────────────
+  const sender: Sender = async (chatId, text) => {
+    if (/^\d+$/.test(chatId)) {
+      if (!telegramBot) throw new Error(`No Telegram bot configured for chat ID ${chatId}`)
+      await telegramBot.api.sendMessage(chatId, text)
+    } else {
+      if (!slackApp) throw new Error(`No Slack app configured for channel ${chatId}`)
+      const formatted = formatForSlack(text)
+      const chunks = splitMessage(formatted)
+      for (const chunk of chunks) {
+        await slackApp.client.chat.postMessage({ channel: chatId, text: chunk })
+      }
+    }
+  }
+
+  initScheduler(sender)
+
   // ── Telegram ────────────────────────────────────────────────────────────────
-  if (hasTelegram) {
-    const bot = createBot()
-
-    // Scheduler sends messages via Telegram bot
-    initScheduler(async (chatId, text) => {
-      await bot.api.sendMessage(chatId, text)
-    })
-
+  if (telegramBot) {
     try {
-      await bot.start()
+      await telegramBot.start()
     } catch (err) {
       logger.error({ err }, 'Failed to start Telegram bot — check TELEGRAM_BOT_TOKEN in .env')
       releaseLock()
@@ -103,9 +117,8 @@ async function main(): Promise<void> {
   }
 
   // ── Slack ───────────────────────────────────────────────────────────────────
-  if (hasSlack) {
+  if (slackApp) {
     try {
-      const slackApp = createSlackApp()
       await slackApp.start()
       logger.info('Slack bot started')
     } catch (err) {

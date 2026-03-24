@@ -206,10 +206,14 @@ LOCAL_REPO_PATH=C:/DEV/meu-projeto
 
 ## Agendamento de tarefas
 
-Você pode agendar o bot para executar prompts automaticamente (apenas Telegram):
+Você pode agendar o bot para executar prompts automaticamente no Telegram e no Slack:
 
 ```bash
-node dist/schedule-cli.js create "Resuma meus emails" "0 9 * * *" SEU_CHAT_ID
+# Telegram: use seu Chat ID numérico
+node dist/schedule-cli.js create "Resuma meus emails" "0 9 * * *" 123456789
+
+# Slack: use o ID de um canal ou DM (ex: C0ANMACP82W)
+node dist/schedule-cli.js create "Resuma meus emails" "0 9 * * *" C0ANMACP82W
 ```
 
 Exemplos de cron:
