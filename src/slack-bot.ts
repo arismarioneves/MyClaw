@@ -13,6 +13,7 @@ import { runAgent } from './agent.js'
 import { buildMemoryContext, saveConversationTurn } from './memory.js'
 import { buildConnectionsContext } from './connections/index.js'
 import { formatForSlack, splitMessage } from './format.js'
+import { downloadSlackFile, buildPhotoMessage, buildDocumentMessage } from './media.js'
 import { logger } from './logger.js'
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
@@ -85,19 +86,57 @@ export function createSlackApp(): SlackApp {
   app.message(async ({ message, say }) => {
     const msg = message as unknown as Record<string, unknown>
 
-    // Ignore bot messages, edits, deletes
-    if (msg['subtype'] || msg['bot_id']) return
+    // Ignore bot messages, edits, deletes (allow file_share)
+    const subtype = msg['subtype'] as string | undefined
+    if (subtype && subtype !== 'file_share') return
+    if (msg['bot_id']) return
 
     const userId = msg['user'] as string | undefined
     const channelId = msg['channel'] as string | undefined
     const text = (msg['text'] as string | undefined) ?? ''
+    const files = (msg['files'] as Array<Record<string, unknown>> | undefined) ?? []
 
-    if (!userId || !channelId || !text.trim()) return
+    if (!userId || !channelId) return
+    if (!text.trim() && files.length === 0) return
 
-    logger.info({ userId, channelId }, 'Slack incoming message')
+    logger.info({ userId, channelId, fileCount: files.length }, 'Slack incoming message')
 
     try {
-      await handleMessage(channelId, userId, text, (m) => say(m))
+      const parts: string[] = []
+      if (text.trim()) parts.push(text)
+
+      for (const file of files) {
+        const url = file['url_private_download'] as string | undefined
+        const name = (file['name'] as string | undefined) ?? 'file'
+        const mimetype = (file['mimetype'] as string | undefined) ?? ''
+
+        if (!url) {
+          logger.warn({ name }, 'Slack file has no url_private_download')
+          parts.push(`[File received but not downloadable: ${name}]`)
+          continue
+        }
+
+        try {
+          const localPath = await downloadSlackFile(SLACK_BOT_TOKEN, url, name)
+          if (mimetype.startsWith('image/')) {
+            parts.push(buildPhotoMessage(localPath))
+          } else {
+            parts.push(buildDocumentMessage(localPath, name))
+          }
+        } catch (err) {
+          logger.error({ err, name }, 'Slack file download error')
+          parts.push(`[Failed to download file: ${name}]`)
+        }
+      }
+
+      const combined = parts.join('\n\n')
+      if (!combined.trim()) {
+        logger.warn({ channelId }, 'Slack message produced empty prompt, ignoring')
+        return
+      }
+
+      logger.debug({ channelId, promptLength: combined.length }, 'Sending to agent')
+      await handleMessage(channelId, userId, combined, (m) => say(m))
     } catch (err) {
       logger.error({ err }, 'Slack message handler error')
       await say('Something went wrong processing your request.').catch(() => { })
