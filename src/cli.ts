@@ -42,6 +42,16 @@ export function isAlive(pid: number): boolean {
 
 // ── Commands ──────────────────────────────────────────────────────────────────
 
+function printBanner(): void {
+  console.log([
+    `\x1b[31m  ██  ██  \x1b[0m`,
+    `\x1b[31m  ██  ██  \x1b[0m  \x1b[1;97mLizz\x1b[0m`,
+    `\x1b[31m  ██  ██  \x1b[0m`,
+    `\x1b[31m██  ██  ██\x1b[0m`,
+    `\x1b[31m██████████\x1b[0m`,
+  ].join('\n'))
+}
+
 function cmdStart(): void {
   const pid = readPid()
   if (pid !== null && isAlive(pid)) {
@@ -57,6 +67,7 @@ function cmdStart(): void {
     process.exit(1)
   }
 
+  printBanner()
   const child = spawn('node', ['--no-warnings', indexJs], {
     cwd: LIZZ_HOME,
     detached: true,
@@ -64,7 +75,7 @@ function cmdStart(): void {
     env: { ...process.env, LIZZ_HOME },
   })
   child.unref()
-  console.log(`${c.green}✓${c.reset} Lizz started (PID ${child.pid})`)
+  console.log(`\n${c.green}✓${c.reset} Lizz started (PID ${child.pid})`)
 }
 
 function cmdStop(): void {
