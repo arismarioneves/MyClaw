@@ -1,4 +1,4 @@
-import { spawn } from 'child_process'
+import { spawn, spawnSync } from 'child_process'
 import { existsSync, readFileSync } from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
@@ -93,6 +93,44 @@ function spawnChild(scriptName: string): void {
   child.on('exit', (code) => process.exit(code ?? 0))
 }
 
+function cmdUpdate(): void {
+  if (!process.env['LIZZ_HOME']) {
+    console.log(`${c.yellow}⚠${c.reset} lizz update only works in a global install (~/.lizz).`)
+    console.log(`  In dev mode, use ${c.cyan}git pull && npm run build${c.reset} instead.`)
+    process.exit(0)
+  }
+
+  const gitDir = path.join(LIZZ_HOME, '.git')
+  if (!existsSync(gitDir)) {
+    console.log(`${c.red}✗${c.reset} No git repository found at ${LIZZ_HOME}`)
+    console.log(`  Re-install with the one-liner to enable updates.`)
+    process.exit(1)
+  }
+
+  console.log(`${c.bold}Lizz Update${c.reset}\n`)
+
+  console.log(`  Pulling latest changes...`)
+  const pull = spawnSync('git', ['pull'], { cwd: LIZZ_HOME, stdio: 'inherit' })
+  if (pull.status !== 0) {
+    console.log(`${c.red}✗${c.reset} git pull failed.`)
+    process.exit(1)
+  }
+
+  console.log(`\n  Rebuilding...`)
+  const build = spawnSync('npm', ['run', 'build'], {
+    cwd: LIZZ_HOME,
+    stdio: 'inherit',
+    shell: process.platform === 'win32',
+  })
+  if (build.status !== 0) {
+    console.log(`${c.red}✗${c.reset} Build failed.`)
+    process.exit(1)
+  }
+
+  console.log(`\n${c.green}✓${c.reset} Lizz updated successfully.`)
+  console.log(`  Run ${c.cyan}lizz start${c.reset} to apply the update.`)
+}
+
 function cmdHelp(): void {
   console.log(`${c.bold}Lizz${c.reset} — personal AI assistant
 
@@ -104,12 +142,14 @@ ${c.bold}Commands:${c.reset}
   ${c.cyan}stop${c.reset}     Stop the bot
   ${c.cyan}status${c.reset}   Show running state and configuration
   ${c.cyan}setup${c.reset}    Run the configuration wizard
+  ${c.cyan}update${c.reset}   Pull latest version and rebuild
   ${c.cyan}help${c.reset}     Show this help
 
 ${c.bold}Examples:${c.reset}
   lizz            # same as lizz start
   lizz setup      # configure tokens and connections
   lizz status     # check health
+  lizz update     # update to latest version
   lizz stop
 `)
 }
@@ -135,6 +175,9 @@ if (isMain) {
       break
     case 'setup':
       spawnChild('setup.js')
+      break
+    case 'update':
+      cmdUpdate()
       break
     case 'help':
     case '--help':
