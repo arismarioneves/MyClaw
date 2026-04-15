@@ -551,7 +551,65 @@
     }
     .footer-links a:hover { color: var(--muted); }
 
-    #install, #integrations, #how-it-works { scroll-margin-top: 72px; }
+    #install, #integrations, #how-it-works, #features { scroll-margin-top: 72px; }
+
+    /* ── FEATURES ────────────────────────────────── */
+    .features-section {
+      padding: 80px 24px;
+      max-width: 1000px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 40px;
+      text-align: left;
+    }
+
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      transition: border-color .2s;
+    }
+    .feature-card:hover { border-color: rgba(127,255,176,.3); }
+
+    .feature-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: var(--accent-dim);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+
+    .feature-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .feature-desc {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    @media (max-width: 720px) {
+      .features-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 480px) {
+      .features-grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
@@ -565,6 +623,10 @@
       <a href="#install" class="hide-mobile">
         <span class="t-en">Install</span>
         <span class="t-pt">Instalar</span>
+      </a>
+      <a href="#features" class="hide-mobile">
+        <span class="t-en">Features</span>
+        <span class="t-pt">Recursos</span>
       </a>
       <a href="#integrations" class="hide-mobile">
         <span class="t-en">Integrations</span>
@@ -763,6 +825,100 @@
           <span class="t-pt">Sua máquina age</span>
         </div>
       </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- FEATURES -->
+  <section class="features-section" id="features">
+    <p class="section-label">
+      <span class="t-en">Features</span>
+      <span class="t-pt">Recursos</span>
+    </p>
+    <h2 class="section-title">
+      <span class="t-en">Everything you need, nothing you don't</span>
+      <span class="t-pt">Tudo que você precisa, nada além disso</span>
+    </h2>
+    <p class="section-sub">
+      <span class="t-en">Built to be lightweight but powerful where it counts.</span>
+      <span class="t-pt">Leve, mas poderoso onde importa.</span>
+    </p>
+
+    <div class="features-grid">
+
+      <div class="feature-card">
+        <div class="feature-icon"><i class="fa-solid fa-calendar-check"></i></div>
+        <div class="feature-title">
+          <span class="t-en">Task Scheduling</span>
+          <span class="t-pt">Agendamento de Tarefas</span>
+        </div>
+        <div class="feature-desc">
+          <span class="t-en">Schedule prompts to run automatically using cron syntax. Daily summaries, weekly reports — set it once, forget it.</span>
+          <span class="t-pt">Agende prompts para rodar automaticamente com sintaxe cron. Resumos diários, relatórios semanais — configure uma vez e esqueça.</span>
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon"><i class="fa-solid fa-brain"></i></div>
+        <div class="feature-title">
+          <span class="t-en">Global Memory</span>
+          <span class="t-pt">Memória Global</span>
+        </div>
+        <div class="feature-desc">
+          <span class="t-en">The bot remembers what matters. Context persists across conversations and decays naturally over time, like a real assistant would.</span>
+          <span class="t-pt">O bot lembra o que importa. O contexto persiste entre conversas e decai naturalmente com o tempo, como um assistente de verdade.</span>
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon"><i class="fa-solid fa-gears"></i></div>
+        <div class="feature-title">
+          <span class="t-en">Background Service</span>
+          <span class="t-pt">Serviço em Background</span>
+        </div>
+        <div class="feature-desc">
+          <span class="t-en">Runs silently as a background service via PM2, launchd, or systemd. Always on — even when your terminal is closed.</span>
+          <span class="t-pt">Roda silenciosamente como serviço via PM2, launchd ou systemd. Sempre ativo — mesmo com o terminal fechado.</span>
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon"><i class="fa-solid fa-image"></i></div>
+        <div class="feature-title">
+          <span class="t-en">Media Support</span>
+          <span class="t-pt">Suporte a Mídia</span>
+        </div>
+        <div class="feature-desc">
+          <span class="t-en">Send photos and documents directly in chat. Claude analyzes images, reads files, and responds — no extra setup needed.</span>
+          <span class="t-pt">Envie fotos e documentos direto no chat. Claude analisa imagens, lê arquivos e responde — sem configuração extra.</span>
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon"><i class="fa-solid fa-comments"></i></div>
+        <div class="feature-title">
+          <span class="t-en">Multi-Messenger</span>
+          <span class="t-pt">Multi-Messenger</span>
+        </div>
+        <div class="feature-desc">
+          <span class="t-en">Telegram and Slack running simultaneously. Use whichever app you already have open — both work at the same time.</span>
+          <span class="t-pt">Telegram e Slack rodando ao mesmo tempo. Use o app que já está aberto — os dois funcionam simultaneamente.</span>
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon"><i class="fa-solid fa-sliders"></i></div>
+        <div class="feature-title">
+          <span class="t-en">Fully Customizable</span>
+          <span class="t-pt">Totalmente Personalizável</span>
+        </div>
+        <div class="feature-desc">
+          <span class="t-en">Edit <code>LIZZ.md</code> to change the assistant's name, personality, tone, and available skills. Changes take effect instantly.</span>
+          <span class="t-pt">Edite <code>LIZZ.md</code> para mudar nome, personalidade, tom e habilidades. As mudanças entram em efeito na próxima mensagem.</span>
+        </div>
+      </div>
+
     </div>
   </section>
 
