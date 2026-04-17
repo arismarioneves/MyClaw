@@ -269,6 +269,7 @@ async function handleMessage(rawText: string): Promise<void> {
 // ─── Main TUI ────────────────────────────────────────────────────────────────
 
 export function createTui(): void {
+  process.stdout.write('\x1b]0;Lizz TUI\x07')
   // Suppress info-level logs (e.g. "Database initialized") in TUI mode
   logger.level = 'warn'
 
