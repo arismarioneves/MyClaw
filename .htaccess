@@ -1,0 +1,3 @@
+<Files "install.ps1">
+    Header set Content-Type "text/plain; charset=utf-8"
+</Files>
