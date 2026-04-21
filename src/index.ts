@@ -49,6 +49,7 @@ function releaseLock(): void {
 }
 
 async function main(): Promise<void> {
+  process.stdout.write('\x1b]0;Lizz\x07')
   console.log(BANNER)
   console.log()
 
